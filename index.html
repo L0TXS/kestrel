@@ -402,8 +402,10 @@ function cardHTML(c) {
   <dt>Street variant</dt><dd>${lk(c.street)}</dd></dl>`;
 }
 function openCard(id) { const c = CARD[id]; if (!c) return; openSheet(cardHTML(c) + `<div class="row" style="margin-top:14px"><button class="btn ghost" onclick="closeSheet()">Close</button><button class="btn ghost" onclick="toggleFav('${id}')">${favs().includes(id) ? "★ Saved" : "☆ Save"}</button></div>`); mStart(id); }
-function openSheet(h) { $("#pane").innerHTML = h; $("#sheet").classList.add("on"); $("#pane").scrollTop = 0; }
-function closeSheet() { $("#sheet").classList.remove("on"); mStop(); }
+let sheetOpen = false;
+function openSheet(h) { $("#pane").innerHTML = h; $("#sheet").classList.add("on"); $("#pane").scrollTop = 0; if (!sheetOpen) { sheetOpen = true; try { history.pushState({ kestrelSheet: 1 }, ""); } catch (e) {} } }
+function closeSheet(fromBack) { $("#sheet").classList.remove("on"); mStop(); if (sheetOpen) { sheetOpen = false; if (!fromBack) { try { history.back(); } catch (e) {} } } }
+window.addEventListener("popstate", () => { if (sheetOpen) closeSheet(true); });
 const favs = () => store.get("favs", []);
 function toggleFav(id) { const f = favs(); const i = f.indexOf(id); i < 0 ? f.push(id) : f.splice(i, 1); store.set("favs", f); openCard(id); }
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
@@ -695,7 +697,7 @@ function rdPick(b) { const i = b.dataset.i, v = +b.dataset.v; RD[i] = v; documen
 // ---------- nav and render ----------
 const VIEWS = { today: ["Today", viewToday, '<path d="M4 6h16M4 12h16M4 18h10"/>'], plan: ["Plan", viewPlan, '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>'], library: ["Library", viewLibrary, '<path d="M5 4h4v16H5zM10 4h4v16h-4zM15.5 4.5l3.8 1 -3.9 15 -3.8-1z"/>'], manual: ["Manual", viewManual, '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>'], learn: ["Learn", viewLearn, '<path d="M12 3l10 5-10 5L2 8z"/><path d="M6 10v5c3 2.5 9 2.5 12 0v-5"/>'], tools: ["Tools", viewTools, '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>'] };
 let current = (location.hash || "").slice(1); if (!VIEWS[current]) current = "today";
-function go(v) { current = v; if (location.hash !== "#" + v) history.replaceState(null, "", "#" + v); render(); window.scrollTo(0, 0); }
+function go(v) { if (sheetOpen) { sheetOpen = false; $("#sheet").classList.remove("on"); mStop(); try { history.replaceState(null, "", "#" + v); } catch (e) {} } else if (v !== current) { try { history.pushState(null, "", "#" + v); } catch (e) {} } current = v; render(); window.scrollTo(0, 0); }
 window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (VIEWS[v] && v !== current) { current = v; render(); } });
 function render() {
   $("#nav").innerHTML = Object.entries(VIEWS).map(([k, v]) => `<button class="${k === current ? "on" : ""}" onclick="go('${k}')"><svg viewBox="0 0 24 24">${v[2]}</svg>${v[0]}</button>`).join("");
