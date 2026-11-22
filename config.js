@@ -1,7 +1,6 @@
 // KESTREL account settings.
-// Paste your Supabase Project URL and anon public key between the quotes, then Commit changes.
 // Never put the service_role or secret key here.
 window.KESTREL_CONFIG = {
-  url: "",
-  key: ""
+  url: "https://mqkfukekvridinlwxiwv.supabase.co",
+  key: "sb_publishable_5mFsNh1DnmYI06lKyYcayg_tsXDUaHE"
 };
